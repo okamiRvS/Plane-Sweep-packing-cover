@@ -456,9 +456,6 @@ def planeSweepPacking(x, y, circles, animation):
                 if int(currentEvent["obj"].circle.name) not in sweepline:   
                     updateSweepLine(sweepline, currentEvent, circles)
             
-            # RIGHT EVENT
-            if currentEvent["obj"].typeEvent == "RIGHT":
-                deleteElementFromSweepLine(sweepline, int(currentEvent["obj"].circle.name))
             
             print(f'Type of the event: {currentEvent["obj"].typeEvent}')
             print(f'Check intersection up and below the circle {currentEvent["obj"].circle.name}')
@@ -469,6 +466,10 @@ def planeSweepPacking(x, y, circles, animation):
             else:
                 print("No intersections found at this iteration\n")
 
+            # RIGHT EVENT
+            if currentEvent["obj"].typeEvent == "RIGHT":
+                deleteElementFromSweepLine(sweepline, int(currentEvent["obj"].circle.name))
+            
             # print sweepline
             if len(sweepline) == 0:
                 print("\nThe sweepline is empty!\n")

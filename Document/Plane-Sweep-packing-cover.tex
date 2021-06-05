@@ -72,6 +72,57 @@ The programming language used is Python with the following main modules:
 	\item math: to execute specific calculations
 \end{itemize}
 
+\noindent First of all, was parsed the input file, which has the minimum and maximum x-coordinate in its first line: $x_{min}$ $x_{max}$ and the respective coordinates for the y-coordinate in the second line: $y_{min}$ $y_{max}$. Each following line descrives a circle with center $c=(c_x, c_y)$ and radius $r$ by: $c_x$ $c_y$ $r$. Thus, the function $parseInput()$ returns the max coordinate $x$, $y$ and an list of $circles$ object. After, the $draw(x,y,circles)$ is a function that computes all the intersection among all the circles and plot this information above the circles. The unique intention about this function is only to have a visual representation of the input.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{img/1.png}
+	\caption{Plane sweep screenshot. The are 5 circles in the scene and 4 red points that represent the intersections among all the circles.} \label{fig:1b}
+\end{figure}
+
+\noindent It is important notice that the origin is on top left of the picture and the orientation is positive from left to right and from top to down. Therefore, the circle $1$ has coordinate $x=1, y=7$ and it is for example "above" the circle $0$. Likewise, the circle $0$ is "below" the circle $1$. Afterwards, was effectively implemented the first plane sweep algorithm to identify if all the elements of $D$ form (or not) a packing of $R$. The function is called $planeSweepPacking(x, y, circles, animation = False)$, where $x$ and $y$ are the dimensions of the rectangle $R$, circles is the list of all circles in input and finally animation is a boolean that if it is set $True$ permits to look at the algorithm step by step for each event in the event queue, otherwise if $False$ runs all the algorithm without stops. Inside the function a dictionary of events, named "eventsQueue" is created. For each circle 2 events are generated: "LEFT" and "RIGHT", where for "LEFT" the point event is given by $c_x$ point - $radius$, while the "RIGHT" event is given by $c_x$ point + $radius$. All the events are ordered by the point event, that is ordered by $x$ axis.  
+
+\begin{lstlisting}
+eventsQueue = {
+	"event1" : {
+		"obj" : event1,
+		"before" : "event0",
+		"after" : "event2",
+	},
+	
+	"event2" :{
+		"obj" : event2,
+		"before" : "event1",
+		"after" : "event3",
+	}
+}
+\end{lstlisting}
+
+\noindent Above there is an example of the "eventsQueue". For each element eventsQueue there are 3 properties: "obj", "before" and "after", where the first one points to the actual event, "before" is the string name of the event before $i-1$ of the current event $i$ and similarly "after" is the string name of the event after $i+1$ the current event $i$. A dictionary for the sweepline was created as well:
+
+\begin{lstlisting}
+sweepline = {
+	0 : {             # name of this circle
+		"up" : None,    # name of the upper circle
+		"me" : 0,       # name of this circle
+		"below" : 2,    # name of the lower circle
+	},
+	
+	2 :{
+		"up" : 0,
+		"me" : 2,
+		"below" : 1,
+	}
+	
+	1 :{
+		"up" : 2,
+		"me" : 1,
+		"below" : None,
+	}
+}
+\end{lstlisting}
+Above there is an example of the "sweepline". For each element of the sweepline there are three properties: "up", "me" and "below", where "up" is the index of the circle above that circle $i$, "me" is the current circle $i$ and finally "below" is the index of the circle below that circle $i$.
+
 \noindent \textbf{Data structures}\\
 
 \noindent \textbf{Time complexity}\\
