@@ -121,14 +121,18 @@ sweepline = {
 	}
 }
 \end{lstlisting}
-Above there is an example of the "sweepline". For each element of the sweepline there are three properties: "up", "me" and "below", where "up" is the index of the circle above that circle $i$, "me" is the current circle $i$ and finally "below" is the index of the circle below that circle $i$.
+Above there is an example of the "sweepline". For each element of the sweepline there are three properties: "up", "me" and "below", where "up" is the index of the circle above that circle $i$, "me" is the current circle $i$ and finally "below" is the index of the circle below that circle $i$. \\
 
-\noindent \textbf{Data structures}\\
+\noindent Then, in order of priority, it is extracted from the eventsQueue an event and some actions are done related of the type of the event. If it is a "LEFT" event, but the point that represents it is out the rectangle, then the event is ignored, otherwise the sweepline is updated adding the new circle. If it is a "RIGHT" event, but the point that represents it is out of the rectangle, then the event is ignored, otherwise the sweepline is updated deleting the circle related to this event. Every time an event is extracted from the eventsQueue it is computed the intersection between the circle above and the circle related to the event and the intersection between the circle below and the circle related to this event. If an intersection is within the rectangle shape then it is reported that "the elements of $D$ do not form a packing of $R$", otherwise if no intersection detected for every event in the eventsQueue then it is stated that "the elements of $D$ form a packing of $R$". \\
+
+\noindent Similarly, for the second plane sweep algorithm the function that it is called is $planeSweepCover(x, y, circles, animation)$ that has the same input. Even here, the eventsQueue and the sweepline are initialized in the same way as the alogorithm before. What changes are the action of the  events. In fact for each event is computed the intersections and these are added in a dictionary called $allIntersectionNotChecked$. At the end of every event, it is checked for every point intersection in allIntersectionNotChecked if it is within a circle in the sweepline. In conclusion, if there are still some points in allIntersectionNotChecked then it is reported "the elements of $D$ do not form a cover of $R$", otherwise "the elements of $D$ form a cover of $R$". \\
+
 
 \noindent \textbf{Time complexity}\\
 
 \noindent \textbf{Space complexity}\\
 
 \noindent \textbf{How to execute the code}\\
+There is one file called main.py and different examples of input that must be in the same folder when it is runned the script. In the main function, to switch among the different inputs is enough to choose the file1 variable and comment the others called in the same way. It is foundamental comment the planeSweepCover statement to run the planeSweepPacking function, likewise comment planeSweepPacking to run the planeSweepCover function. To enable the animation it is enough simply set animation=True in planeSweepPacking or planeSweepCover functions, otherwise if not animation needed set animation=False.
 
 \end{document}
