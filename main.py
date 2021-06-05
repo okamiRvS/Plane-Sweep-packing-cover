@@ -41,11 +41,7 @@ class Event:
     def __str__(self):
         return f"nameEvent : {self.name}, circle : {self.circle}, pointEvent : {self.pointEvent}, typeEvent : {self.typeEvent}"
 
-def parseInput():
-    #file1 = open('ExampleInput', 'r') # IT SEEMS WORK
-    #file1 = open('ExampleInputTest', 'r') # DOES FORM A COVER BECAUSE IT CANNOT ADD ANY POINT IN THE LIST, TRY TO FIX THIS
-    file1 = open('ExampleInputTest2', 'r') # IT SEEMS WORK
-    #file1 = open('ExampleInputTest3', 'r')
+def parseInput(file1):
     Lines = file1.readlines()
 
     data = Lines[0].split()
@@ -96,41 +92,42 @@ def draw(x,y,circles):
     cv2.imshow("background", background)
     cv2.waitKey(0)
 
-def screenShotPlaneSweep(x, y, circles, event, intersection = None):
-    scaleFactor = 50
-
-    background = np.zeros((x.y * scaleFactor, y.y * scaleFactor, 3), dtype=np.uint8)
-
-    # Line thickness of 2 px
-    thickness = 2
+def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = True):
     
-    # fontScale
-    fontScale = 1
+    if animation:            
+        scaleFactor = 50
+        background = np.zeros((x.y * scaleFactor, y.y * scaleFactor, 3), dtype=np.uint8)
 
-    # Draw a circle with blue line borders of thickness of 2 px
-    for circle in circles:
-        color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
-        position = (circle.point.x * scaleFactor, circle.point.y * scaleFactor)
-        cv2.circle(background, position, circle.radius * scaleFactor, color, thickness)
-        cv2.circle(background, position, 1, color, 5)
-        cv2.putText(background, circle.name, (position[0]+10,position[1]), cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, 4, cv2.LINE_AA)
-
-    cv2.line(background, (event.pointEvent * scaleFactor, 0), (event.pointEvent * scaleFactor, x.y * scaleFactor), (0, 255, 0), thickness=2)
-    if event.pointEvent * scaleFactor <= int(x.y * scaleFactor / 2):
-        pos = (event.pointEvent * scaleFactor + 20, int((x.y * scaleFactor) / 2))
-    else:
-        pos = (event.pointEvent * scaleFactor - 130, int((x.y * scaleFactor) / 2))
-    cv2.putText(background, event.typeEvent, pos, cv2.FONT_HERSHEY_SIMPLEX, fontScale, (255,255,255), 4, cv2.LINE_AA)
-    cv2.imshow("background", background)
-    cv2.waitKey(1)
-
-    if intersection is not None:
-        for spa in intersection:
-            for p in intersection[spa]["points"]:
-                background = cv2.circle(background, (p.x, p.y), 1, (0,0,255), 10)
+        # Line thickness of 2 px
+        thickness = 2
         
+        # fontScale
+        fontScale = 1
+
+        # Draw a circle with blue line borders of thickness of 2 px
+        for circle in circles:
+            color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
+            position = (circle.point.x * scaleFactor, circle.point.y * scaleFactor)
+            cv2.circle(background, position, circle.radius * scaleFactor, color, thickness)
+            cv2.circle(background, position, 1, color, 5)
+            cv2.putText(background, circle.name, (position[0]+10,position[1]), cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, 4, cv2.LINE_AA)
+
+        cv2.line(background, (event.pointEvent * scaleFactor, 0), (event.pointEvent * scaleFactor, x.y * scaleFactor), (0, 255, 0), thickness=2)
+        if event.pointEvent * scaleFactor <= int(x.y * scaleFactor / 2):
+            pos = (event.pointEvent * scaleFactor + 20, int((x.y * scaleFactor) / 2))
+        else:
+            pos = (event.pointEvent * scaleFactor - 130, int((x.y * scaleFactor) / 2))
+        cv2.putText(background, event.typeEvent, pos, cv2.FONT_HERSHEY_SIMPLEX, fontScale, (255,255,255), 4, cv2.LINE_AA)
         cv2.imshow("background", background)
         cv2.waitKey(0)
+
+        if intersection is not None:
+            for spa in intersection:
+                for p in intersection[spa]["points"]:
+                    background = cv2.circle(background, (p.x, p.y), 1, (0,0,255), 10)
+            
+            cv2.imshow("background", background)
+            cv2.waitKey(0)
 
 
 def computeIntersection(circle_a, circle_b, scaleFactor):
@@ -360,7 +357,7 @@ def updateSweepLine(sweepline, currentEvent, circles):
                 elif eventCircleY < swapCircleYBelow:
                     currentCircle = sweepline[currentCircle["below"]]
 
-def planeSweepPacking(x, y, circles):
+def planeSweepPacking(x, y, circles, animation):
     events = []
     for circle in circles:
         events.append(Event(circle, circle.point.x - circle.radius, "LEFT"))
@@ -464,10 +461,10 @@ def planeSweepPacking(x, y, circles):
                 deleteElementFromSweepLine(sweepline, int(currentEvent["obj"].circle.name))
             
             print(f'Type of the event: {currentEvent["obj"].typeEvent}')
-            print("Check intersection up and below this circle")
+            print(f'Check intersection up and below the circle {currentEvent["obj"].circle.name}')
             intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles)
             if (len(intersectionPointsList[0]) != 0) or (len(intersectionPointsList[1]) != 0):
-                print("The elements of D do not form a packing of R")
+                print("\nThe elements of D do not form a packing of R")
                 break
             else:
                 print("No intersections found at this iteration\n")
@@ -476,9 +473,10 @@ def planeSweepPacking(x, y, circles):
             if len(sweepline) == 0:
                 print("\nThe sweepline is empty!\n")
             else:
+                print("Sweepline:")
                 pretty(sweepline)
             
-            screenShotPlaneSweep(x, y, circles, currentEvent["obj"])
+            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation)
 
         else: # outside the rectangle R
             if currentEvent["obj"].typeEvent == "LEFT":
@@ -507,6 +505,7 @@ def planeSweepPacking(x, y, circles):
 
         count += 1
         if currentEvent["after"] is None:
+            print("The event queue is empty!\n")
             print("The elements of D form a packing of R")
             break
         currentEvent = eventsQueue[currentEvent["after"]] # access to the next event
@@ -573,7 +572,7 @@ def pNotIn(point, pointsToCheck, height, width, scalefactor = 50):
     
     return True
 
-def planeSweepCover(x, y, circles):
+def planeSweepCover(x, y, circles, animation):
     events = []
     for circle in circles:
         events.append(Event(circle, circle.point.x - circle.radius, "LEFT"))
@@ -647,10 +646,11 @@ def planeSweepCover(x, y, circles):
 
     eventsQueue[events[-1].name] = {"obj": events[-1], "before" : events[-2].name, "after" : None}
 
-    # Swap line among the events
+    isThereAnIntersection = False
     count = 0
     currentEvent = eventsQueue[events[0].name]
     allIntersectionNotChecked = {}
+    # Swap line among the events
     while True:
         print(f"Iteration: {count}")
         print(f'Name current obj: {currentEvent["obj"].name}')
@@ -675,10 +675,11 @@ def planeSweepCover(x, y, circles):
             
             
             print(f'Type of the event: {currentEvent["obj"].typeEvent}')
-            print("Check intersection up and below this circle")
+            print(f'Check intersection up and below the circle {currentEvent["obj"].circle.name}')
             intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles)
 
             if (len(intersectionPointsList[0]) != 0) or (len(intersectionPointsList[1]) != 0):
+                isThereAnIntersection = True
                 index_circle = int(currentEvent["obj"].circle.name)
 
                 if index_circle not in allIntersectionNotChecked: # if not exists we create it
@@ -726,9 +727,10 @@ def planeSweepCover(x, y, circles):
             if len(sweepline) == 0:
                 print("\nThe sweepline is empty!\n")
             else:
+                print("Sweepline:")
                 pretty(sweepline)
             
-            screenShotPlaneSweep(x, y, circles, currentEvent["obj"])
+            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation)
 
         else: # outside the rectangle R
             if currentEvent["obj"].typeEvent == "LEFT":
@@ -757,22 +759,39 @@ def planeSweepCover(x, y, circles):
 
         count += 1
         if currentEvent["after"] is None:
+            print("The event queue is empty!\n")
 
-            pdb.set_trace()
             if len(allIntersectionNotChecked)>0:
-                print("The elements of D doesn't form a cover of R")
-                print(allIntersectionNotChecked)
-                screenShotPlaneSweep(x, y, circles, currentEvent["obj"], allIntersectionNotChecked)
+                print("The elements of D do not form a cover of R\nThese points do not belong within any circle:")
             else:
-                print("The elements of D form a cover of R")
+                if isThereAnIntersection:
+                    print("The elements of D form a cover of R")
+                else:
+                    print("The elements of D do not form a cover of R")
+            print(allIntersectionNotChecked)
+            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], intersection=allIntersectionNotChecked, animation=animation)
             break
         currentEvent = eventsQueue[currentEvent["after"]] # access to the next event
 
 def main():
-    x, y ,circles = parseInput()
-    #draw(x,y,circles)
-    #planeSweepPacking(x, y, circles)
-    planeSweepCover(x, y, circles)
+    # Read different examples of input
+    file1 = open('ExampleInput', 'r')
+    #file1 = open('ExampleInputTest', 'r')
+    #file1 = open('ExampleInputTest2', 'r')
+    #file1 = open('ExampleInputTest3', 'r')
+
+    # Parse The input
+    x, y ,circles = parseInput(file1)
+
+    # This is only to see what happens, not plane sweep algorithm applied here
+    draw(x,y,circles) 
+
+    start = time.time()
+    planeSweepPacking(x, y, circles, animation = False)
+    #planeSweepCover(x, y, circles, animation = False)
+    end1 = time.time() - start
+
+    print(f"\nTime for plane sweep: {end1}")
 
 if __name__ == "__main__":
     main()
