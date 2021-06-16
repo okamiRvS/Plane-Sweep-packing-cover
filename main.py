@@ -4,11 +4,12 @@ import pdb
 import math
 import time
 from copy import copy, deepcopy
+import itertools
 
 class Point:
     def __init__(self, x, y):
-        self.x = int(x)
-        self.y = int(y)
+        self.x = np.float32(x)
+        self.y = np.float32(y)
     
     def __repr__(self):
         return f"[x : {self.x}, y : {self.y}]"
@@ -16,11 +17,15 @@ class Point:
     def __str__(self):
         return f"x : {self.x}, y : {self.y}"
 
+    def convert2Int(self):
+        self.x = int(self.x)
+        self.y = int(self.y)
+
 class Circle:
     def __init__(self, point, radius, name):
         self.name = str(name)
         self.point = point
-        self.radius = int(radius)
+        self.radius = int(radius) # it must be int for the circle
 
     def __repr__(self):
         return f"nameCircle : {self.name}, circleCenter : {self.point}, radius : {self.radius}"
@@ -58,12 +63,14 @@ def parseInput(file1):
         print("Point {}: {}".format(count, line.strip()))
         count += 1
     
-    return x, y, circles   
+    y.convert2Int()
+    x.convert2Int()
+    return y, x, circles   
 
-def draw(x,y,circles):
-    scaleFactor = 50
+def draw(x,y,circles, scaleFactor = 50):
 
     background = np.zeros((x.y * scaleFactor, y.y * scaleFactor, 3), dtype=np.uint8)
+    background[:] = (255,255,255)
 
     # Line thickness of 2 px
     thickness = 2
@@ -74,10 +81,10 @@ def draw(x,y,circles):
     # Draw a circle with blue line borders of thickness of 2 px
     for circle in circles:
         color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
-        position = (circle.point.x * scaleFactor, circle.point.y * scaleFactor)
+        position = ( int(circle.point.x * scaleFactor), int( (x.y  - circle.point.y) * scaleFactor) )
         cv2.circle(background, position, circle.radius * scaleFactor, color, thickness)
         cv2.circle(background, position, 1, color, 5)
-        cv2.putText(background, circle.name, (position[0]+10,position[1]), cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, 4, cv2.LINE_AA)
+        cv2.putText(background, circle.name, (position[0]+10,position[1]+15), cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, 4, cv2.LINE_AA)
 
     cv2.imshow("background", background)
     cv2.waitKey(0)
@@ -88,15 +95,44 @@ def draw(x,y,circles):
 
             if intersectionPoints is not None:
                 for p in intersectionPoints:
-                    background = cv2.circle(background, (p.x, p.y), 1, (0,0,255), 10)
+                    background = cv2.circle(background, ( int(p.x), int((x.y * scaleFactor - p.y)) ), 1, (0,0,255), 10)
 
     cv2.imshow("background", background)
     cv2.waitKey(0)
 
-def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = True):
-    
-    if animation:            
-        scaleFactor = 50
+def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = True, scaleFactor=50, intersectionPointsList=None):
+
+
+    if animation:
+
+        if intersectionPointsList is not None:
+            intersectionPointsList = list(itertools.chain.from_iterable(intersectionPointsList))
+            if len(intersectionPointsList) > 0:
+
+                background = np.zeros((x.y * scaleFactor, y.y * scaleFactor, 3), dtype=np.uint8)
+                
+                # Line thickness of 2 px
+                thickness = 2
+                
+                # fontScale
+                fontScale = 1
+
+                # Draw a circle with blue line borders of thickness of 2 px
+                for circle in circles:
+                    color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
+                    position = ( int(circle.point.x * scaleFactor), int((x.y - circle.point.y) * scaleFactor) )
+                    cv2.circle(background, position, circle.radius * scaleFactor, color, thickness)
+                    cv2.circle(background, position, 1, color, 5)
+                    cv2.putText(background, circle.name, (position[0]+10,position[1]), cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, 4, cv2.LINE_AA)
+
+                for p in intersectionPointsList:
+                    background = cv2.circle(background, ( int(p.x * scaleFactor), int( (x.y - p.y) * scaleFactor )), 1, (0,0,255), 10)
+
+                print(intersectionPointsList)
+                cv2.imshow("background", background)
+                cv2.waitKey(0)
+                return
+          
         background = np.zeros((x.y * scaleFactor, y.y * scaleFactor, 3), dtype=np.uint8)
 
         # Line thickness of 2 px
@@ -108,16 +144,16 @@ def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = 
         # Draw a circle with blue line borders of thickness of 2 px
         for circle in circles:
             color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
-            position = (circle.point.x * scaleFactor, circle.point.y * scaleFactor)
+            position = ( int(circle.point.x * scaleFactor), int((x.y - circle.point.y) * scaleFactor) )
             cv2.circle(background, position, circle.radius * scaleFactor, color, thickness)
             cv2.circle(background, position, 1, color, 5)
             cv2.putText(background, circle.name, (position[0]+10,position[1]), cv2.FONT_HERSHEY_SIMPLEX, fontScale, color, 4, cv2.LINE_AA)
 
-        cv2.line(background, (event.pointEvent * scaleFactor, 0), (event.pointEvent * scaleFactor, x.y * scaleFactor), (0, 255, 0), thickness=2)
-        if event.pointEvent * scaleFactor <= int(x.y * scaleFactor / 2):
-            pos = (event.pointEvent * scaleFactor + 20, int((x.y * scaleFactor) / 2))
+        cv2.line(background, ( int(event.pointEvent * scaleFactor), 0), ( int(event.pointEvent * scaleFactor), int(x.y * scaleFactor )), (0, 255, 0), thickness=2)
+        if int(event.pointEvent * scaleFactor) <= int(x.y * scaleFactor / 2):
+            pos = ( int(event.pointEvent * scaleFactor + 20), int((x.y * scaleFactor) / 2))
         else:
-            pos = (event.pointEvent * scaleFactor - 130, int((x.y * scaleFactor) / 2))
+            pos = ( int(event.pointEvent * scaleFactor - 130), int((x.y * scaleFactor) / 2))
         cv2.putText(background, event.typeEvent, pos, cv2.FONT_HERSHEY_SIMPLEX, fontScale, (255,255,255), 4, cv2.LINE_AA)
         cv2.imshow("background", background)
         cv2.waitKey(0)
@@ -125,11 +161,11 @@ def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = 
         if intersection is not None:
             for spa in intersection:
                 for p in intersection[spa]["points"]:
-                    background = cv2.circle(background, (p.x, p.y), 1, (0,0,255), 10)
+                    background = cv2.circle(background, ( int(p.x), int(x.y * scaleFactor - p.y)), 1, (0,0,255), 10)
             
             cv2.imshow("background", background)
             cv2.waitKey(0)
-
+    
 
 def computeIntersection(circle_a, circle_b, scaleFactor):
     x0, y0, r0 = circle_a.point.x * scaleFactor, circle_a.point.y * scaleFactor,  circle_a.radius * scaleFactor
@@ -167,24 +203,29 @@ def pretty(d, indent=0):
         else:
             print('\t' * (indent+1) + str(value))
 
-def findIntersection(sweepline, index, circles, scaleFactor = 50):
+def findIntersection(sweepline, index, circles, scaleFactor, sweepElem=None):
     intersectionPointsUp = []
     intersectionPointsBelow = []
 
     if len(sweepline) > 1:
+        if sweepElem is None:
+            up = sweepline[index]["up"]
+            below = sweepline[index]["below"]
 
-        up = sweepline[index]["up"]
-        below = sweepline[index]["below"]
+            if up is not None:
+                intersectionPointsUp = computeIntersection(circles[index], circles[up], scaleFactor)
+                if intersectionPointsUp is None:
+                    intersectionPointsUp = []
 
-        if up is not None:
-            intersectionPointsUp = computeIntersection(circles[index], circles[up], scaleFactor)
+            if below is not None:
+                intersectionPointsBelow = computeIntersection(circles[index], circles[below], scaleFactor)
+                if intersectionPointsBelow is None:
+                    intersectionPointsBelow = []
+
+        else:
+            intersectionPointsUp = computeIntersection(circles[index], circles[sweepElem], scaleFactor)
             if intersectionPointsUp is None:
                 intersectionPointsUp = []
-
-        if below is not None:
-            intersectionPointsBelow = computeIntersection(circles[index], circles[below], scaleFactor)
-            if intersectionPointsBelow is None:
-                intersectionPointsBelow = []
 
     return [intersectionPointsUp, intersectionPointsBelow]
 
@@ -192,6 +233,7 @@ def findIntersection(sweepline, index, circles, scaleFactor = 50):
 def deleteElementFromSweepLine(sweepline, index):
     up = sweepline[index]["up"]
     below = sweepline[index]["below"]
+
 
     if up is not None:
         if below is not None:
@@ -207,6 +249,13 @@ def deleteElementFromSweepLine(sweepline, index):
 
     del sweepline[index]
     
+    global rootIndex
+    if index == rootIndex:
+        if len(sweepline) > 0:
+            rootIndex = next(iter(sweepline))
+        else:
+            rootIndex = 0
+    
 rootIndex = 0
 def updateSweepLine(sweepline, currentEvent, circles):
     if len(sweepline) == 0:
@@ -218,6 +267,7 @@ def updateSweepLine(sweepline, currentEvent, circles):
             "below" : None,
         }
     else: 
+            
         currentCircle = sweepline[rootIndex]
         eventCircleY = currentEvent["obj"].circle.point.y
 
@@ -298,9 +348,9 @@ def updateSweepLine(sweepline, currentEvent, circles):
                     }
 
                     # update the current sweep circle that is below
+                    tmp = sweepline[currentCircle["me"]]["up"]
                     sweepline[currentCircle["me"]]["up"] = int(currentEvent["obj"].circle.name)
-
-                    sweepline[currentCircle["up"]]["below"] = int(currentEvent["obj"].circle.name)
+                    sweepline[tmp]["below"] = int(currentEvent["obj"].circle.name)
                     break
 
                 elif eventCircleY < swapCircleMe:
@@ -333,6 +383,7 @@ def updateSweepLine(sweepline, currentEvent, circles):
                     }
 
                     # update the current sweep circle that is below
+                    pdb.set_trace()
                     sweepline[currentCircle["me"]]["up"] = int(currentEvent["obj"].circle.name)
                     sweepline[currentCircle["up"]]["below"] = int(currentEvent["obj"].circle.name)
                     break
@@ -356,7 +407,7 @@ def updateSweepLine(sweepline, currentEvent, circles):
                 elif eventCircleY < swapCircleYBelow:
                     currentCircle = sweepline[currentCircle["below"]]
 
-def planeSweepPacking(x, y, circles, animation):
+def planeSweepPacking(x, y, circles, animation, scaleFactor):
     events = []
     for circle in circles:
         events.append(Event(circle, circle.point.x - circle.radius, "LEFT"))
@@ -455,10 +506,18 @@ def planeSweepPacking(x, y, circles, animation):
         
         print(f'Type of the event: {currentEvent["obj"].typeEvent}')
         print(f'Check intersection up and below the circle {currentEvent["obj"].circle.name}')
-        intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles)
+        flagInter = False
+        intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles, scaleFactor=1)
         if (len(intersectionPointsList[0]) != 0) or (len(intersectionPointsList[1]) != 0):
-            print("\nThe elements of D do not form a packing of R")
-            break
+            interPointsList = list(itertools.chain.from_iterable(intersectionPointsList))
+            for pointInt in interPointsList:
+                if pNotIn(pointInt, x, y):
+                    flagInter = True
+
+            if flagInter:
+                screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor, intersectionPointsList=intersectionPointsList)
+                print("\nThe elements of D do not form a packing of R")
+                break
         else:
             print("No intersections found at this iteration\n")
 
@@ -474,8 +533,8 @@ def planeSweepPacking(x, y, circles, animation):
             pretty(sweepline)
         
         # inside the rectangle R
-        if x.x <= currentEvent["obj"].pointEvent <= x.y: 
-            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation)
+        if y.x <= currentEvent["obj"].pointEvent <= y.y: 
+            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor)
 
         count += 1
         if currentEvent["after"] is None:
@@ -487,13 +546,16 @@ def planeSweepPacking(x, y, circles, animation):
 def isPointInCircle(circle, p, scalefactor = 50):
     cx = circle.point.x * scalefactor
     cy = circle.point.y * scalefactor
-    d = math.sqrt( (p.x - cx) ** 2  + (p.y - cy) ** 2)
+    px = p.x * scalefactor
+    py = p.y * scalefactor
+    d = math.sqrt( (px - cx) ** 2  + (py - cy) ** 2)
 
-    print(f"\ncircle: {circle}, circleScaled: {cx} {cy}, p: {p}")
-    print(f"d: {d}, round(d): {round(d)}")
-    print(f"circle.radius: {circle.radius}, circle.radiusScaled: {circle.radius * scalefactor}\n")
+    print(f"\ncircle: {circle}, circleScaled: {cx} {cy}\np Intersection: {p}")
+    print(f"Distance point from circle center: {d}, Round(distance): {round(d)}")
+    print(f"Circle.radius: {circle.radius}, Circle radius Scaled: {circle.radius * scalefactor}\n")
+    print(f"round(d) < circle.radius * scalefactor: {round(d) < circle.radius * scalefactor}\n")
 
-    if int(np.ceil(d)) < circle.radius * scalefactor:
+    if round(d) < circle.radius * scalefactor:
         return True
     else:
         return False
@@ -518,7 +580,7 @@ def pNotIn(point, height, width, scalefactor = 1):
     
     return True
 
-def planeSweepCover(x, y, circles, animation):
+def planeSweepCover(x, y, circles, animation, scaleFactor):
     events = []
     for circle in circles:
         events.append(Event(circle, circle.point.x - circle.radius, "LEFT"))
@@ -578,233 +640,238 @@ def planeSweepCover(x, y, circles, animation):
 
         if currentEvent["obj"].typeEvent != "INTERSECTION":
             print(f'Check intersection up and below the circle {currentEvent["obj"].circle.name}')
-            intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles, scaleFactor=1)
+            for sweepElem in sweepline:
+                if sweepElem != int(currentEvent["obj"].circle.name):
+                    #pdb.set_trace()
+                    intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles, scaleFactor=1, sweepElem=sweepElem)
+                    #screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor, intersectionPointsList=intersectionPointsList)
 
-            if (len(intersectionPointsList[0]) != 0) or (len(intersectionPointsList[1]) != 0):
-                isThereAnIntersection = True
+                    if (len(intersectionPointsList[0]) != 0) or (len(intersectionPointsList[1]) != 0):
+                        isThereAnIntersection = True
 
-                if len(intersectionPointsList[0]) == 1:
-                    firstP = intersectionPointsList[0]
-                    if pNotIn(firstP[0], x, y):
-                        cev = currentEvent
-                        while True:
-                            if cev["obj"].pointEvent > firstP[0].x and cev["obj"].typeEvent != "LEFT":
-                                # Adding a new intersection rectangle event
-                                beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                copyObj = deepcopy(cev["obj"])
-                                copyObj.name = objName
-                                copyObj.pointEvent = firstP[1].x
-                                copyObj.point = firstP[1]
-                                copyObj.typeEvent = "INTERSECTION"
+                        if len(intersectionPointsList[0]) == 1:
+                            firstP = intersectionPointsList[0]
+                            if pNotIn(firstP[0], x, y):
+                                cev = currentEvent
+                                while True:
+                                    if cev["obj"].pointEvent > firstP[0].x:
+                                        # Adding a new intersection rectangle event
+                                        beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                        objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                        copyObj = deepcopy(cev["obj"])
+                                        copyObj.name = objName
+                                        copyObj.pointEvent = firstP[1].x
+                                        copyObj.point = firstP[1]
+                                        copyObj.typeEvent = "INTERSECTION"
 
-                                eventsQueue[objName] = {
-                                    "obj" : copyObj,
-                                    "after" : cev["obj"].name,
-                                    "before" : beforeTmp
-                                }
+                                        eventsQueue[objName] = {
+                                            "obj" : copyObj,
+                                            "after" : cev["obj"].name,
+                                            "before" : beforeTmp
+                                        }
 
-                                eventsQueue[cev["obj"].name]["before"] = objName
-                                eventsQueue[beforeTmp]["after"] = objName
-                                countIntersection += 1
-                                break
+                                        eventsQueue[cev["obj"].name]["before"] = objName
+                                        eventsQueue[beforeTmp]["after"] = objName
+                                        countIntersection += 1
+                                        break
+                                    else:
+                                        cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+
+                        elif len(intersectionPointsList[0]) == 2:
+
+                            firstP = intersectionPointsList[0]
+                                            
+                            # if same intersection
+                            if firstP[0].x == firstP[1].x and firstP[0].y == firstP[1].y:
+                                if pNotIn(firstP[0], x, y):
+                                    cev = currentEvent
+                                    while True:
+                                        if cev["obj"].pointEvent > firstP[0].x:
+                                            # Adding a new intersection rectangle event
+                                            beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                            objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                            copyObj = deepcopy(cev["obj"])
+                                            copyObj.name = objName
+                                            copyObj.pointEvent = firstP[0].x
+                                            copyObj.point = firstP[0]
+                                            copyObj.typeEvent = "INTERSECTION"
+
+                                            eventsQueue[objName] = {
+                                                "obj" : copyObj,
+                                                "after" : cev["obj"].name,
+                                                "before" : beforeTmp
+                                            }
+
+                                            eventsQueue[cev["obj"].name]["before"] = objName
+                                            eventsQueue[beforeTmp]["after"] = objName
+                                            countIntersection += 1
+                                            break
+                                        else:
+                                            cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
                             else:
-                                cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+                                if pNotIn(firstP[0], x, y):    
+                                    cev = currentEvent
+                                    while True:
+                                        if cev["obj"].pointEvent > firstP[0].x:
+                                            # Adding a new intersection rectangle event
+                                            beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                            objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                            copyObj = deepcopy(cev["obj"])
+                                            copyObj.name = objName
+                                            copyObj.pointEvent = firstP[0].x
+                                            copyObj.point = firstP[0]
+                                            copyObj.typeEvent = "INTERSECTION"
 
-                elif len(intersectionPointsList[0]) == 2:
+                                            eventsQueue[objName] = {
+                                                "obj" : copyObj,
+                                                "after" : cev["obj"].name,
+                                                "before" : beforeTmp
+                                            }
 
-                    firstP = intersectionPointsList[0]
-                                    
-                    # if same intersection
-                    if firstP[0].x == firstP[1].x and firstP[0].y == firstP[1].y:
-                        if pNotIn(firstP[0], x, y):
-                            cev = currentEvent
-                            while True:
-                                if cev["obj"].pointEvent > firstP[0].x and cev["obj"].typeEvent != "LEFT":
-                                    # Adding a new intersection rectangle event
-                                    beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                    objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                    copyObj = deepcopy(cev["obj"])
-                                    copyObj.name = objName
-                                    copyObj.pointEvent = firstP[0].x
-                                    copyObj.point = firstP[0]
-                                    copyObj.typeEvent = "INTERSECTION"
+                                            eventsQueue[cev["obj"].name]["before"] = objName
+                                            eventsQueue[beforeTmp]["after"] = objName
+                                            countIntersection += 1
+                                            break
+                                        else:
+                                            cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+                                if pNotIn(firstP[1], x, y):
+                                    cev = currentEvent
+                                    while True:
+                                        if cev["obj"].pointEvent > firstP[1].x:
+                                            # Adding a new intersection rectangle event
+                                            beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                            objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                            copyObj = deepcopy(cev["obj"])
+                                            copyObj.name = objName
+                                            copyObj.pointEvent = firstP[1].x
+                                            copyObj.point = firstP[1]
+                                            copyObj.typeEvent = "INTERSECTION"
 
-                                    eventsQueue[objName] = {
-                                        "obj" : copyObj,
-                                        "after" : cev["obj"].name,
-                                        "before" : beforeTmp
-                                    }
+                                            eventsQueue[objName] = {
+                                                "obj" : copyObj,
+                                                "after" : cev["obj"].name,
+                                                "before" : beforeTmp
+                                            }
 
-                                    eventsQueue[cev["obj"].name]["before"] = objName
-                                    eventsQueue[beforeTmp]["after"] = objName
-                                    countIntersection += 1
-                                    break
-                                else:
-                                    cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
-                    else:
-                        if pNotIn(firstP[0], x, y):    
-                            cev = currentEvent
-                            while True:
-                                if cev["obj"].pointEvent > firstP[0].x and cev["obj"].typeEvent != "LEFT":
-                                    # Adding a new intersection rectangle event
-                                    beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                    objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                    copyObj = deepcopy(cev["obj"])
-                                    copyObj.name = objName
-                                    copyObj.pointEvent = firstP[0].x
-                                    copyObj.point = firstP[0]
-                                    copyObj.typeEvent = "INTERSECTION"
+                                            eventsQueue[cev["obj"].name]["before"] = objName
+                                            eventsQueue[beforeTmp]["after"] = objName
+                                            countIntersection += 1
+                                            break
+                                        else:
+                                            cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+                        if len(intersectionPointsList[1]) == 1:
+                            firstP = intersectionPointsList[1]
+                            if pNotIn(firstP[0], x, y):
+                                cev = currentEvent
+                                while True:
+                                    if cev["obj"].pointEvent > firstP[0].x:
+                                        # Adding a new intersection rectangle event
+                                        beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                        objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                        copyObj = deepcopy(cev["obj"])
+                                        copyObj.name = objName
+                                        copyObj.pointEvent = thirdP[0].x
+                                        copyObj.point = thirdP[0]
+                                        copyObj.typeEvent = "INTERSECTION"
 
-                                    eventsQueue[objName] = {
-                                        "obj" : copyObj,
-                                        "after" : cev["obj"].name,
-                                        "before" : beforeTmp
-                                    }
+                                        eventsQueue[objName] = {
+                                            "obj" : copyObj,
+                                            "after" : cev["obj"].name,
+                                            "before" : beforeTmp
+                                        }
 
-                                    eventsQueue[cev["obj"].name]["before"] = objName
-                                    eventsQueue[beforeTmp]["after"] = objName
-                                    countIntersection += 1
-                                    break
-                                else:
-                                    cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
-                        if pNotIn(firstP[1], x, y):
-                            cev = currentEvent
-                            while True:
-                                if cev["obj"].pointEvent > firstP[1].x and cev["obj"].typeEvent != "LEFT":
-                                    # Adding a new intersection rectangle event
-                                    beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                    objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                    copyObj = deepcopy(cev["obj"])
-                                    copyObj.name = objName
-                                    copyObj.pointEvent = firstP[1].x
-                                    copyObj.point = firstP[1]
-                                    copyObj.typeEvent = "INTERSECTION"
+                                        eventsQueue[cev["obj"].name]["before"] = objName
+                                        eventsQueue[beforeTmp]["after"] = objName
+                                        countIntersection += 1
+                                        break
+                                    else:
+                                        cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+                        elif len(intersectionPointsList[1]) == 2:
+                            thirdP = intersectionPointsList[1]
+                            if thirdP[0].x == thirdP[1].x and thirdP[0].y == thirdP[1].y:
+                                if pNotIn(thirdP[0], x, y):
+                                    cev = currentEvent
+                                    while True:
+                                        if cev["obj"].pointEvent > thirdP[0].x:
+                                            # Adding a new intersection rectangle event
+                                            beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                            objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                            copyObj = deepcopy(cev["obj"])
+                                            copyObj.name = objName
+                                            copyObj.pointEvent = thirdP[0].x
+                                            copyObj.point = thirdP[0]
+                                            copyObj.typeEvent = "INTERSECTION"
 
-                                    eventsQueue[objName] = {
-                                        "obj" : copyObj,
-                                        "after" : cev["obj"].name,
-                                        "before" : beforeTmp
-                                    }
+                                            eventsQueue[objName] = {
+                                                "obj" : copyObj,
+                                                "after" : cev["obj"].name,
+                                                "before" : beforeTmp
+                                            }
 
-                                    eventsQueue[cev["obj"].name]["before"] = objName
-                                    eventsQueue[beforeTmp]["after"] = objName
-                                    countIntersection += 1
-                                    break
-                                else:
-                                    cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
-                if len(intersectionPointsList[1]) == 1:
-                    firstP = intersectionPointsList[1]
-                    if pNotIn(firstP[0], x, y):
-                        cev = currentEvent
-                        while True:
-                            if cev["obj"].pointEvent > firstP[0].x and cev["obj"].typeEvent != "LEFT":
-                                # Adding a new intersection rectangle event
-                                beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                copyObj = deepcopy(cev["obj"])
-                                copyObj.name = objName
-                                copyObj.pointEvent = thirdP[0].x
-                                copyObj.point = thirdP[0]
-                                copyObj.typeEvent = "INTERSECTION"
-
-                                eventsQueue[objName] = {
-                                    "obj" : copyObj,
-                                    "after" : cev["obj"].name,
-                                    "before" : beforeTmp
-                                }
-
-                                eventsQueue[cev["obj"].name]["before"] = objName
-                                eventsQueue[beforeTmp]["after"] = objName
-                                countIntersection += 1
-                                break
+                                            eventsQueue[cev["obj"].name]["before"] = objName
+                                            eventsQueue[beforeTmp]["after"] = objName
+                                            countIntersection += 1
+                                            break
+                                        else:
+                                            cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
                             else:
-                                cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
-                elif len(intersectionPointsList[1]) == 2:
-                    thirdP = intersectionPointsList[1]
-                    if thirdP[0].x == thirdP[1].x and thirdP[0].y == thirdP[1].y:
-                        if pNotIn(thirdP[0], x, y):
-                            cev = currentEvent
-                            while True:
-                                if cev["obj"].pointEvent > thirdP[0].x and cev["obj"].typeEvent != "LEFT":
-                                    # Adding a new intersection rectangle event
-                                    beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                    objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                    copyObj = deepcopy(cev["obj"])
-                                    copyObj.name = objName
-                                    copyObj.pointEvent = thirdP[0].x
-                                    copyObj.point = thirdP[0]
-                                    copyObj.typeEvent = "INTERSECTION"
+                                if pNotIn(thirdP[0], x, y):
+                                    cev = currentEvent
+                                    while True:
+                                        if cev["obj"].pointEvent > thirdP[0].x:
+                                            # Adding a new intersection rectangle event
+                                            beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                            objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                            copyObj = deepcopy(cev["obj"])
+                                            copyObj.name = objName
+                                            copyObj.pointEvent = thirdP[0].x
+                                            copyObj.point = thirdP[0]
+                                            copyObj.typeEvent = "INTERSECTION"
 
-                                    eventsQueue[objName] = {
-                                        "obj" : copyObj,
-                                        "after" : cev["obj"].name,
-                                        "before" : beforeTmp
-                                    }
+                                            eventsQueue[objName] = {
+                                                "obj" : copyObj,
+                                                "after" : cev["obj"].name,
+                                                "before" : beforeTmp
+                                            }
 
-                                    eventsQueue[cev["obj"].name]["before"] = objName
-                                    eventsQueue[beforeTmp]["after"] = objName
-                                    countIntersection += 1
-                                    break
-                                else:
-                                    cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+                                            eventsQueue[cev["obj"].name]["before"] = objName
+                                            eventsQueue[beforeTmp]["after"] = objName
+                                            countIntersection += 1
+                                            break
+                                        else:
+                                            cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
+                                if pNotIn(thirdP[1], x, y):
+                                    cev = currentEvent
+                                    while True:
+                                        if cev["obj"].pointEvent > thirdP[1].x:
+                                            # Adding a new intersection rectangle event
+                                            beforeTmp = eventsQueue[cev["obj"].name]["before"]
+                                            objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
+                                            copyObj = deepcopy(cev["obj"])
+                                            copyObj.name = objName
+                                            copyObj.pointEvent = thirdP[1].x
+                                            copyObj.point = thirdP[1]
+                                            copyObj.typeEvent = "INTERSECTION"
+
+                                            eventsQueue[objName] = {
+                                                "obj" : copyObj,
+                                                "after" : cev["obj"].name,
+                                                "before" : beforeTmp
+                                            }
+
+                                            eventsQueue[cev["obj"].name]["before"] = objName
+                                            eventsQueue[beforeTmp]["after"] = objName
+                                            countIntersection += 1
+                                            break
+                                        else:
+                                            cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
                     else:
-                        if pNotIn(thirdP[0], x, y):
-                            cev = currentEvent
-                            while True:
-                                if cev["obj"].pointEvent > thirdP[0].x and cev["obj"].typeEvent != "LEFT":
-                                    # Adding a new intersection rectangle event
-                                    beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                    objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                    copyObj = deepcopy(cev["obj"])
-                                    copyObj.name = objName
-                                    copyObj.pointEvent = thirdP[0].x
-                                    copyObj.point = thirdP[0]
-                                    copyObj.typeEvent = "INTERSECTION"
-
-                                    eventsQueue[objName] = {
-                                        "obj" : copyObj,
-                                        "after" : cev["obj"].name,
-                                        "before" : beforeTmp
-                                    }
-
-                                    eventsQueue[cev["obj"].name]["before"] = objName
-                                    eventsQueue[beforeTmp]["after"] = objName
-                                    countIntersection += 1
-                                    break
-                                else:
-                                    cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
-                        if pNotIn(thirdP[1], x, y):
-                            cev = currentEvent
-                            while True:
-                                if cev["obj"].pointEvent > thirdP[1].x and cev["obj"].typeEvent != "LEFT":
-                                    # Adding a new intersection rectangle event
-                                    beforeTmp = eventsQueue[cev["obj"].name]["before"]
-                                    objName = cev["obj"].circle.name + "INTERSECTION" + str(countIntersection)
-                                    copyObj = deepcopy(cev["obj"])
-                                    copyObj.name = objName
-                                    copyObj.pointEvent = thirdP[1].x
-                                    copyObj.point = thirdP[1]
-                                    copyObj.typeEvent = "INTERSECTION"
-
-                                    eventsQueue[objName] = {
-                                        "obj" : copyObj,
-                                        "after" : cev["obj"].name,
-                                        "before" : beforeTmp
-                                    }
-
-                                    eventsQueue[cev["obj"].name]["before"] = objName
-                                    eventsQueue[beforeTmp]["after"] = objName
-                                    countIntersection += 1
-                                    break
-                                else:
-                                    cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
-            else:
-                print("No intersections found at this iteration\n")
+                        print("No intersections found at this iteration\n")
 
         # INTERSECTION EVENT
         if currentEvent["obj"].typeEvent == "INTERSECTION":
             if not checkIntersection(sweepline, circles, currentEvent["obj"]):
+                screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor)
                 print("The elements of D do not form a cover of R")
                 break
         
@@ -820,8 +887,8 @@ def planeSweepCover(x, y, circles, animation):
             pretty(sweepline)
 
         # inside the rectangle R
-        if x.x <= currentEvent["obj"].pointEvent <= x.y: 
-            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation)
+        if y.x <= currentEvent["obj"].pointEvent <= y.y: 
+            screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor)
 
         count += 1
 
@@ -837,20 +904,26 @@ def planeSweepCover(x, y, circles, animation):
 
 def main():
     # Read different examples of input
-    #file1 = open('ExampleInput', 'r')
+    file1 = open('ExampleInput', 'r')
     #file1 = open('ExampleInputTest', 'r')
-    file1 = open('ExampleInputTest2', 'r')
-    #file1 = open('ExampleInputTest3', 'r')
+    #file1 = open('ExampleInputTest2', 'r')
+    #file1 = open('Cover5', 'r')
+    #file1 = open('Packing6', 'r')
 
     # Parse The input
     x, y ,circles = parseInput(file1)
 
+    width = y.y - y.x
+    height = x.y - x.x
+    maxValue = max(width, height)
+    scaleFactor = int(15 / maxValue * 50)
+
     # This is only to see what happens, not plane sweep algorithm applied here
-    draw(x,y,circles) 
+    draw(x,y,circles, scaleFactor) 
 
     start = time.time()
-    planeSweepPacking(x, y, circles, animation = False)
-    #planeSweepCover(x, y, circles, animation = True)
+    #planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
+    planeSweepCover(x, y, circles, animation = False, scaleFactor=scaleFactor)
     end1 = time.time() - start
 
     print(f"\nTime for plane sweep: {end1}")
