@@ -1,3 +1,4 @@
+from os import system
 import cv2
 import numpy as np
 import pdb
@@ -5,6 +6,7 @@ import math
 import time
 from copy import copy, deepcopy
 import itertools
+import sys
 
 class Point:
     def __init__(self, x, y):
@@ -78,6 +80,16 @@ def draw(x,y,circles, scaleFactor = 50):
     # fontScale
     fontScale = 1
 
+    # Draw rectangle
+    if x.x != 0 or y.x != 0 :
+        print(f"x.x: {x.x}")
+        print(f"x.y: {x.y}")
+        print(f"y.x: {y.x}")
+        print(f"y.y: {y.y}")
+        # top-left, bottom-right
+        posForRect = int( y.x * scaleFactor), int( 0 * scaleFactor), int( y.y * scaleFactor), int( (x.y - x.x) * scaleFactor ) 
+        cv2.rectangle(background, posForRect,(255, 255, 0), 5)
+
     # Draw a circle with blue line borders of thickness of 2 px
     for circle in circles:
         color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
@@ -117,6 +129,12 @@ def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = 
                 # fontScale
                 fontScale = 1
 
+                # Draw rectangle
+                if x.x != 0 or y.x != 0 :
+                    # top-left, bottom-right
+                    posForRect = int( y.x * scaleFactor), int( 0 * scaleFactor), int( y.y * scaleFactor), int( (x.y - x.x) * scaleFactor ) 
+                    cv2.rectangle(background, posForRect, (255, 255, 0), 5)
+
                 # Draw a circle with blue line borders of thickness of 2 px
                 for circle in circles:
                     color = (np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255))
@@ -140,6 +158,12 @@ def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = 
         
         # fontScale
         fontScale = 1
+
+        # Draw rectangle
+        if x.x != 0 or y.x != 0 :
+            # top-left, bottom-right
+            posForRect = int( y.x * scaleFactor), int( 0 * scaleFactor), int( y.y * scaleFactor), int( (x.y - x.x) * scaleFactor ) 
+            cv2.rectangle(background, posForRect, (255, 255, 0), 5)
 
         # Draw a circle with blue line borders of thickness of 2 px
         for circle in circles:
@@ -383,7 +407,6 @@ def updateSweepLine(sweepline, currentEvent, circles):
                     }
 
                     # update the current sweep circle that is below
-                    pdb.set_trace()
                     sweepline[currentCircle["me"]]["up"] = int(currentEvent["obj"].circle.name)
                     sweepline[currentCircle["up"]]["below"] = int(currentEvent["obj"].circle.name)
                     break
@@ -517,6 +540,7 @@ def planeSweepPacking(x, y, circles, animation, scaleFactor):
             if flagInter:
                 screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor, intersectionPointsList=intersectionPointsList)
                 print("\nThe elements of D do not form a packing of R")
+                #pdb.set_trace()
                 break
         else:
             print("No intersections found at this iteration\n")
@@ -533,7 +557,7 @@ def planeSweepPacking(x, y, circles, animation, scaleFactor):
             pretty(sweepline)
         
         # inside the rectangle R
-        if y.x <= currentEvent["obj"].pointEvent <= y.y: 
+        if y.x <= currentEvent["obj"].pointEvent <= y.y and x.x <= currentEvent["obj"].circle.point.y: 
             screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor)
 
         count += 1
@@ -575,7 +599,7 @@ def pNotIn(point, height, width, scalefactor = 1):
         return False
 
     # Negative values are out of the screen, they are not added in the allIntersectionNotChecked
-    if point.x < 0 or point.y < 0:
+    if point.x < width.x or point.y < height.x:
         return False
     
     return True
@@ -887,7 +911,7 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
             pretty(sweepline)
 
         # inside the rectangle R
-        if y.x <= currentEvent["obj"].pointEvent <= y.y: 
+        if y.x <= currentEvent["obj"].pointEvent <= y.y and  x.x <= currentEvent["obj"].circle.point.y: 
             screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor)
 
         count += 1
@@ -904,9 +928,10 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
 
 def main():
     # Read different examples of input
-    file1 = open('ExampleInput', 'r')
+    #file1 = open('ExampleInput', 'r')
     #file1 = open('ExampleInputTest', 'r')
     #file1 = open('ExampleInputTest2', 'r')
+    #file1 = open('ExampleInputTest3', 'r')
     #file1 = open('Cover5', 'r')
     #file1 = open('Packing6', 'r')
 
@@ -917,16 +942,22 @@ def main():
     height = x.y - x.x
     maxValue = max(width, height)
     scaleFactor = int(15 / maxValue * 50)
-
+    scaleFactor = 50
+    
     # This is only to see what happens, not plane sweep algorithm applied here
     draw(x,y,circles, scaleFactor) 
 
     start = time.time()
-    #planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
-    planeSweepCover(x, y, circles, animation = False, scaleFactor=scaleFactor)
+    #planeSweepPacking(x, y, circles, animation = True, scaleFactor=scaleFactor)
+    planeSweepCover(x, y, circles, animation = True, scaleFactor=scaleFactor)
     end1 = time.time() - start
 
     print(f"\nTime for plane sweep: {end1}")
+
+    try:
+        sys.exit()
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
     main()
