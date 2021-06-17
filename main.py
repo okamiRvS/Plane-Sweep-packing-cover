@@ -928,7 +928,7 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
 
 def main():
     # Read different examples of input
-    #file1 = open('ExampleInput', 'r')
+    file1 = open('ExampleInput', 'r')
     #file1 = open('ExampleInputTest', 'r')
     #file1 = open('ExampleInputTest2', 'r')
     #file1 = open('ExampleInputTest3', 'r')
@@ -948,8 +948,8 @@ def main():
     draw(x,y,circles, scaleFactor) 
 
     start = time.time()
-    #planeSweepPacking(x, y, circles, animation = True, scaleFactor=scaleFactor)
-    planeSweepCover(x, y, circles, animation = True, scaleFactor=scaleFactor)
+    planeSweepPacking(x, y, circles, animation = True, scaleFactor=scaleFactor)
+    #planeSweepCover(x, y, circles, animation = True, scaleFactor=scaleFactor)
     end1 = time.time() - start
 
     print(f"\nTime for plane sweep: {end1}")
