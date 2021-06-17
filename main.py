@@ -258,7 +258,6 @@ def deleteElementFromSweepLine(sweepline, index):
     up = sweepline[index]["up"]
     below = sweepline[index]["below"]
 
-
     if up is not None:
         if below is not None:
             sweepline[up]["below"] = below
@@ -407,8 +406,9 @@ def updateSweepLine(sweepline, currentEvent, circles):
                     }
 
                     # update the current sweep circle that is below
+                    tmp = sweepline[currentCircle["me"]]["up"]
                     sweepline[currentCircle["me"]]["up"] = int(currentEvent["obj"].circle.name)
-                    sweepline[currentCircle["up"]]["below"] = int(currentEvent["obj"].circle.name)
+                    sweepline[tmp]["below"] = int(currentEvent["obj"].circle.name)
                     break
 
                 elif swapCircleYBelow <= eventCircleY <= swapCircleMe:
@@ -509,10 +509,11 @@ def planeSweepPacking(x, y, circles, animation, scaleFactor):
     currentEvent = eventsQueue[events[0].name]
     while True:
         print(f"Iteration: {count}")
-        print(f'Name current obj: {currentEvent["obj"].name}')
-        print(eventsQueue)
-        # pretty(eventsQueue) # pretty view of data
-        print(f"Length eventsQueue: {len(eventsQueue)} \n")
+        if animation:
+            print(f'Name current obj: {currentEvent["obj"].name}')
+            print(eventsQueue)
+            pretty(eventsQueue) # pretty view of data
+            print(f"Length eventsQueue: {len(eventsQueue)} \n")
 
         # LEFT EVENT
         if currentEvent["obj"].typeEvent == "LEFT":
@@ -540,21 +541,22 @@ def planeSweepPacking(x, y, circles, animation, scaleFactor):
             if flagInter:
                 screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor, intersectionPointsList=intersectionPointsList)
                 print("\nThe elements of D do not form a packing of R")
-                #pdb.set_trace()
                 break
         else:
-            print("No intersections found at this iteration\n")
+            if animation:
+                print("No intersections found at this iteration\n")
 
         # RIGHT EVENT
         if currentEvent["obj"].typeEvent == "RIGHT":
             deleteElementFromSweepLine(sweepline, int(currentEvent["obj"].circle.name))
         
         # print sweepline
-        if len(sweepline) == 0:
-            print("\nThe sweepline is empty!\n")
-        else:
-            print("Sweepline:")
-            pretty(sweepline)
+        if animation:
+            if len(sweepline) == 0:
+                print("\nThe sweepline is empty!\n")
+            else:
+                print("Sweepline:")
+                pretty(sweepline)
         
         # inside the rectangle R
         if y.x <= currentEvent["obj"].pointEvent <= y.y and x.x <= currentEvent["obj"].circle.point.y: 
@@ -567,27 +569,28 @@ def planeSweepPacking(x, y, circles, animation, scaleFactor):
             break
         currentEvent = eventsQueue[currentEvent["after"]] # access to the next event
 
-def isPointInCircle(circle, p, scalefactor = 50):
+def isPointInCircle(circle, p, animation, scalefactor = 50):
     cx = circle.point.x * scalefactor
     cy = circle.point.y * scalefactor
     px = p.x * scalefactor
     py = p.y * scalefactor
     d = math.sqrt( (px - cx) ** 2  + (py - cy) ** 2)
 
-    print(f"\ncircle: {circle}, circleScaled: {cx} {cy}\np Intersection: {p}")
-    print(f"Distance point from circle center: {d}, Round(distance): {round(d)}")
-    print(f"Circle.radius: {circle.radius}, Circle radius Scaled: {circle.radius * scalefactor}\n")
-    print(f"round(d) < circle.radius * scalefactor: {round(d) < circle.radius * scalefactor}\n")
+    if animation:
+        print(f"\ncircle: {circle}, circleScaled: {cx} {cy}\np Intersection: {p}")
+        print(f"Distance point from circle center: {d}, Round(distance): {round(d)}")
+        print(f"Circle.radius: {circle.radius}, Circle radius Scaled: {circle.radius * scalefactor}\n")
+        print(f"round(d) < circle.radius * scalefactor: {round(d) < circle.radius * scalefactor}\n")
 
     if round(d) < circle.radius * scalefactor:
         return True
     else:
         return False
 
-def checkIntersection(sweepline, circles, currentEvent):
+def checkIntersection(sweepline, circles, currentEvent, animation):
 
     for p in sweepline:
-        if isPointInCircle(circles[p], currentEvent.point):
+        if isPointInCircle(circles[p], currentEvent.point, animation):
             return True
 
     return False
@@ -648,10 +651,11 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
     # Swap line among the events
     while True:
         print(f"Iteration: {count}")
-        print(f'Name current obj: {currentEvent["obj"].name}')
-        print(eventsQueue)
-        # pretty(eventsQueue) # pretty view of data
-        print(f"Length eventsQueue: {len(eventsQueue)} \n")
+        if animation:
+            print(f'Name current obj: {currentEvent["obj"].name}')
+            print(eventsQueue)
+            pretty(eventsQueue) # pretty view of data
+            print(f"Length eventsQueue: {len(eventsQueue)} \n")
 
         # LEFT EVENT
         if currentEvent["obj"].typeEvent == "LEFT":
@@ -666,7 +670,6 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
             print(f'Check intersection up and below the circle {currentEvent["obj"].circle.name}')
             for sweepElem in sweepline:
                 if sweepElem != int(currentEvent["obj"].circle.name):
-                    #pdb.set_trace()
                     intersectionPointsList = findIntersection(sweepline, int(currentEvent["obj"].circle.name), circles, scaleFactor=1, sweepElem=sweepElem)
                     #screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor, intersectionPointsList=intersectionPointsList)
 
@@ -890,11 +893,12 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
                                         else:
                                             cev = eventsQueue[eventsQueue[cev["obj"].name]["after"]]
                     else:
-                        print("No intersections found at this iteration\n")
+                        if animation:
+                            print("No intersections found at this iteration\n")
 
         # INTERSECTION EVENT
         if currentEvent["obj"].typeEvent == "INTERSECTION":
-            if not checkIntersection(sweepline, circles, currentEvent["obj"]):
+            if not checkIntersection(sweepline, circles, currentEvent["obj"], animation):
                 screenShotPlaneSweep(x, y, circles, currentEvent["obj"], animation=animation, scaleFactor=scaleFactor)
                 print("The elements of D do not form a cover of R")
                 break
@@ -904,11 +908,12 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
             deleteElementFromSweepLine(sweepline, int(currentEvent["obj"].circle.name))
 
         # print sweepline
-        if len(sweepline) == 0:
-            print("\nThe sweepline is empty!\n")
-        else:
-            print("Sweepline:")
-            pretty(sweepline)
+        if animation:
+            if len(sweepline) == 0:
+                print("\nThe sweepline is empty!\n")
+            else:
+                print("Sweepline:")
+                pretty(sweepline)
 
         # inside the rectangle R
         if y.x <= currentEvent["obj"].pointEvent <= y.y and  x.x <= currentEvent["obj"].circle.point.y: 
@@ -928,28 +933,32 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
 
 def main():
     # Read different examples of input
-    file1 = open('ExampleInput', 'r')
+    #file1 = open('ExampleInput', 'r')
     #file1 = open('ExampleInputTest', 'r')
     #file1 = open('ExampleInputTest2', 'r')
     #file1 = open('ExampleInputTest3', 'r')
-    #file1 = open('Cover5', 'r')
+    file1 = open('Cover5', 'r')
     #file1 = open('Packing6', 'r')
+    #file1 = open('100circlesdense', 'r')   # ANIMATION = FALSE
+    #file1 = open('1000circlessparse', 'r') # ANIMATION = FALSE
 
     # Parse The input
     x, y ,circles = parseInput(file1)
 
+    '''
     width = y.y - y.x
     height = x.y - x.x
     maxValue = max(width, height)
     scaleFactor = int(15 / maxValue * 50)
+    ''' 
     scaleFactor = 50
     
     # This is only to see what happens, not plane sweep algorithm applied here
     draw(x,y,circles, scaleFactor) 
 
     start = time.time()
-    planeSweepPacking(x, y, circles, animation = True, scaleFactor=scaleFactor)
-    #planeSweepCover(x, y, circles, animation = True, scaleFactor=scaleFactor)
+    #planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
+    planeSweepCover(x, y, circles, animation = True, scaleFactor=scaleFactor)
     end1 = time.time() - start
 
     print(f"\nTime for plane sweep: {end1}")
