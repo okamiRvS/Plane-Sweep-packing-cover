@@ -937,10 +937,10 @@ def main():
     #file1 = open('ExampleInputTest', 'r')
     #file1 = open('ExampleInputTest2', 'r')
     #file1 = open('ExampleInputTest3', 'r')
-    file1 = open('Cover5', 'r')
+    #file1 = open('Cover5', 'r')
     #file1 = open('Packing6', 'r')
     #file1 = open('100circlesdense', 'r')   # ANIMATION = FALSE
-    #file1 = open('1000circlessparse', 'r') # ANIMATION = FALSE
+    file1 = open('1000circlessparse', 'r') # ANIMATION = FALSE
 
     # Parse The input
     x, y ,circles = parseInput(file1)
@@ -954,11 +954,11 @@ def main():
     scaleFactor = 50
     
     # This is only to see what happens, not plane sweep algorithm applied here
-    draw(x,y,circles, scaleFactor) 
+    #draw(x,y,circles, scaleFactor) 
 
     start = time.time()
-    #planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
-    planeSweepCover(x, y, circles, animation = True, scaleFactor=scaleFactor)
+    planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
+    #planeSweepCover(x, y, circles, animation = False, scaleFactor=scaleFactor)
     end1 = time.time() - start
 
     print(f"\nTime for plane sweep: {end1}")
