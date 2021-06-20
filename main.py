@@ -114,7 +114,6 @@ def draw(x,y,circles, scaleFactor = 50):
 
 def screenShotPlaneSweep(x, y, circles, event, intersection = None, animation = True, scaleFactor=50, intersectionPointsList=None):
 
-
     if animation:
 
         if intersectionPointsList is not None:
@@ -931,16 +930,58 @@ def planeSweepCover(x, y, circles, animation, scaleFactor):
             break
         currentEvent = eventsQueue[currentEvent["after"]] # access to the next event
 
+def bruteForcePacking(x, y, circles, scaleFactor):
+
+    for i in range(len(circles)):
+        for j in range(len(circles)):
+            intersectionPoints = computeIntersection(circles[i], circles[j], scaleFactor)
+
+            if intersectionPoints is not None:
+                print("The elements of D do not form a packing of R")
+                return
+
+    print("The elements of D form a packing of R")
+    return
+
+def bruteForceCover(x, y, circles, scaleFactor):
+
+    flag = False
+    for i in range(len(circles)):
+        for j in range(len(circles)):
+            intersectionPoints = computeIntersection(circles[i], circles[j], scaleFactor)
+
+            if intersectionPoints is not None:
+                for p in intersectionPoints:
+                    count = 0
+                    for circle in circles:
+                        if pNotIn(p, x, y) and isPointInCircle(circle, p, animation=False, scalefactor = 50):
+                            flag = True
+                            pdb.set_trace()
+                            break
+                        else:
+                            count += 1
+                    if count == len(circles):
+                        pdb.set_trace()
+                        print("The elements of D do not form a cover of R")
+                        return
+    
+    if flag:
+        print("The elements of D form a cover of R")
+    else:
+        print("The elements of D do not form a cover of R")
+
+    return
+
 def main():
     # Read different examples of input
     #file1 = open('ExampleInput', 'r')
     #file1 = open('ExampleInputTest', 'r')
     #file1 = open('ExampleInputTest2', 'r')
     #file1 = open('ExampleInputTest3', 'r')
-    #file1 = open('Cover5', 'r')
+    file1 = open('Cover5', 'r')
     #file1 = open('Packing6', 'r')
     #file1 = open('100circlesdense', 'r')   # ANIMATION = FALSE
-    file1 = open('1000circlessparse', 'r') # ANIMATION = FALSE
+    #file1 = open('1000circlessparse', 'r') # ANIMATION = FALSE
 
     # Parse The input
     x, y ,circles = parseInput(file1)
@@ -957,11 +998,28 @@ def main():
     #draw(x,y,circles, scaleFactor) 
 
     start = time.time()
-    planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
-    #planeSweepCover(x, y, circles, animation = False, scaleFactor=scaleFactor)
+    #planeSweepPacking(x, y, circles, animation = False, scaleFactor=scaleFactor)
+    planeSweepCover(x, y, circles, animation = False, scaleFactor=scaleFactor)
     end1 = time.time() - start
-
     print(f"\nTime for plane sweep: {end1}")
+
+    '''
+    # BRUTEFORCE TEST
+    print(f"\n\nBruteForce Packing")
+    start = time.time()
+    bruteForcePacking(x, y, circles, scaleFactor=scaleFactor)
+    end1 = time.time() - start  
+    print(f"\nTime for bruteForcePacking: {end1}")
+    '''
+
+    '''
+    # SOMETHING TO FIX
+    print(f"\n\nBrute Force Cover")
+    start = time.time()
+    bruteForceCover(x, y, circles, scaleFactor=scaleFactor)
+    end1 = time.time() - start  
+    print(f"\nTime for Brute Force Cover: {end1}")
+    '''
 
     try:
         sys.exit()
