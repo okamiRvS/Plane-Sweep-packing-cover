@@ -974,24 +974,19 @@ def bruteForceCover(x, y, circles, scaleFactor):
 
 def main():
     # Read different examples of input
-    #file1 = open('ExampleInput', 'r')
-    #file1 = open('ExampleInputTest', 'r')
-    #file1 = open('ExampleInputTest2', 'r')
-    #file1 = open('ExampleInputTest3', 'r')
-    file1 = open('Cover5', 'r')
-    #file1 = open('Packing6', 'r')
-    #file1 = open('100circlesdense', 'r')   # ANIMATION = FALSE
-    #file1 = open('1000circlessparse', 'r') # ANIMATION = FALSE
+    #file1 = open('input\ExampleInput', 'r')
+    #file1 = open('input\ExampleInputTest', 'r')
+    #file1 = open('input\ExampleInputTest2', 'r')
+    #file1 = open('input\ExampleInputTest3', 'r')
+    file1 = open('input\Cover5', 'r')
+    #file1 = open('input\Packing6', 'r')
+    #file1 = open('input\\100circlesdense', 'r')        # ANIMATION = FALSE
+    #file1 = open('input\\1000circlessparse', 'r')      # ANIMATION = FALSE
 
     # Parse The input
     x, y ,circles = parseInput(file1)
 
-    '''
-    width = y.y - y.x
-    height = x.y - x.x
-    maxValue = max(width, height)
-    scaleFactor = int(15 / maxValue * 50)
-    ''' 
+    # How big the picture, if activated...
     scaleFactor = 50
     
     # This is only to see what happens, not plane sweep algorithm applied here
