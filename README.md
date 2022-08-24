@@ -4,27 +4,7 @@
 
 #### Programming project description:
 
-Let $R$ be an axis-parallel rectangle and $D = \{d_1,...d_n\}$ a collection of closed circular disks.
-
-Each disk $d_i$ is represented by its center $p_i$, which lies within $R$, and its positive radius $r_i$. Disks may extend outside of $R$, and one disk may be contained within another.
-
-- If every point of $R$ lies within at most one disk of $D$ (see left Figure 1) then we say that the elements of $D$ form a packing of $R$. Implement a plane-sweep $O(n log n)$ time algorithm that determines whether $D$ is a packing of $R$.
-
-- If every point of $R$ lies within at least one disk of $D$ then we say that the elements of $D$ form a cover of $R$. See right Figure 1: the disks do not form a cover because there is a small gap as shown in the figure. Implement a plane-sweep $O((n+m) \, log \, n)$ time algorithm that determines whether $D$ is a cover of $R$, where $m$ is the number of intersection points lying within $R$ between the boundaries of disks. The running time should not depend on the number of intersection points that lie outside of $R$.
-
-![img](img/0.JPG)
-
-You should implement a plane-sweep algorithm from left to right. Your program should take as input a file (a sample file is attached), which has the minimum and maximum x-coordinate in its firs tline:
-
-$x_{min} \, x_{max}$
-
-And the respective coordinates for the y-coordinate in the secon line.
-
-$y_{min} \, y_{max}$
-
-Each follocing line describes a circle with center $c(c_x, c_y)$ and radius $r$ by:
-
-$c_x \, c_y \, r$
+Let $R$ be an axis-parallel rectangle and $D = \{d_1,...d_n\}$ a collection of closed circular disks. <br><br> Each disk $d_i$ is represented by its center $p_i$, which lies within $R$, and its positive radius $r_i$. Disks may extend outside of $R$, and one disk may be contained within another. <br><br> - If every point of $R$ lies within at most one disk of $D$ (see left Figure 1) then we say that the elements of $D$ form a packing of $R$. Implement a plane-sweep $O(n log n)$ time algorithm that determines whether $D$ is a packing of $R$. <br><br> - If every point of $R$ lies within at least one disk of $D$ then we say that the elements of $D$ form a cover of $R$. See right Figure 1: the disks do not form a cover because there is a small gap as shown in the figure. Implement a plane-sweep $O((n+m) \, log \, n)$ time algorithm that determines whether $D$ is a cover of $R$, where $m$ is the number of intersection points lying within $R$ between the boundaries of disks. The running time should not depend on the number of intersection points that lie outside of $R$. <br><br> <p align="center"><img src="img/0.JPG" /></p> <br><br> You should implement a plane-sweep algorithm from left to right. Your program should take as input a file (a sample file is attached), which has the minimum and maximum x-coordinate in its first line: <br> $x_{min} \, x_{max}$. <br><br> And the respective coordinates for the y-coordinate in the secon line. <br> $y_{min} \, y_{max}$ <br><br> Each follocing line describes a circle with center $c(c_x, c_y)$ and radius $r$ by: <br> $c_x \, c_y \, r$.
 
 At the termination of the program, the program should clearly state if $D$ is a packing/cover. Ideally you should use the efficient data structures as discussed in lecture. If that is not possible, then you should state which data structures you used instead and how that affects the running
 time.
